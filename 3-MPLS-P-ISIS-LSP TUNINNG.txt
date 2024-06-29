@@ -1,0 +1,26 @@
+ISIS-LSP TUNINNG
+
+###P1
+P1(config-router)#
+router isis 1
+maximum-paths 1  		> We configure this value, which is 4 by default and a maximum of 32, as 1 for the lab environment.
+mpls ldp sync			> It enables LDP packets to be produced in conjunction with IGP.
+
+max-lsp-lifetime		> Default is 1200. We increase this value for the stability of the network and to reduce the load on the device.
+
+lsp-refresh-interval	> Default value is 900. It ensures that network topology information is spread throughout the network as LSP. Although keeping it for a long time provides positive benefits to the performance of the device, late transmission of the change in network topology may cause instability.
+
+lsp-gen-interval 		> Default value is ~30ms. It can be used to prevent LSP storm.
+
+spf-interval level-2 	> lsp-gen-interval Calculates the time required to restart the SPF algorithm.
+
+prc-interval			> Determines the waiting time for Prefix Redistribution Calculation.
+
+nfs-ietf 				> It ensures that the Non-Stop Forwarding feature works compatible with non-cisco devices.
+
+microloop avoidance		> loop preventation.
+microloop avoidance rib-update-delay	> Default values is 5000.
+
+ip route priority high tag	> IP routing increases stability and security.
+
+
