@@ -1,0 +1,144 @@
+5-MPLS-PE LDP Configuration
+###PE1
+PE1# show run | sec mpls
+mpls label range 110000 119999
+mpls ldp router-id Loopback0
+
+router isis
+ net 49.0001.0000.0000.0011.00
+ is-type level-2-only
+ router-id Loopback0
+ authentication mode md5 level-2
+ authentication key-chain cisco level-2
+ metric-style wide
+ no hello padding point-to-point
+ log-adjacency-changes all
+ passive-interface Loopback0
+ bfd all-interfaces
+ mpls ldp sync
+ mpls ldp autoconfig
+
+ ###MPLS Configuration is check
+
+ PE1#show mpls forwarding-table 10.1.3.1
+Local      Outgoing   Prefix           Bytes Label   Outgoing   Next Hop    
+Label      Label      or Tunnel Id     Switched      interface              
+110000     Pop Label  10.1.3.1/32      0             Gi6        10.1.2.1 
+
+PE1#show mpls interfaces 
+Interface              IP            Tunnel   BGP Static Operational
+GigabitEthernet6       Yes (ldp)     No       No  No     Yes 
+
+P1#show tag-switchin tdp discovery 
+% Command accepted but obsolete, unreleased or unsupported; see documentation.
+ Local TDP Identifier:
+    10.1.3.1:0
+    Discovery Sources:
+    Interfaces:
+        GigabitEthernet1 (ldp): xmit/recv
+            LDP Id: 10.1.3.3:0
+        GigabitEthernet2 (ldp): xmit
+        GigabitEthernet3 (ldp): xmit/recv
+            LDP Id: 10.1.3.2:0
+        GigabitEthernet6 (ldp): xmit/recv
+            LDP Id: 10.1.3.11:0
+
+
+v1#show tag-switchi tdp bindings 
+% Command accepted but obsolete, unreleased or unsupported; see documentation.
+
+  tib entry: 10.1.1.0/30, rev 8
+        local binding:  tag: imp-null
+        remote binding: tsr: 10.1.3.11:0, tag: 110003
+        remote binding: tsr: 10.1.3.2:0, tag: imp-null
+        remote binding: tsr: 10.1.3.3:0, tag: 30000
+  tib entry: 10.1.1.4/30, rev 30
+        local binding:  tag: 10009
+        remote binding: tsr: 10.1.3.2:0, tag: 20000
+        remote binding: tsr: 10.1.3.11:0, tag: 110011
+        remote binding: tsr: 10.1.3.3:0, tag: imp-null
+  tib entry: 10.1.1.8/30, rev 4
+        local binding:  tag: imp-null
+        remote binding: tsr: 10.1.3.11:0, tag: 110001
+        remote binding: tsr: 10.1.3.2:0, tag: 20001
+        remote binding: tsr: 10.1.3.3:0, tag: imp-null
+  tib entry: 10.1.1.12/30, rev 6
+        local binding:  tag: imp-null
+        remote binding: tsr: 10.1.3.11:0, tag: 110002
+        remote binding: tsr: 10.1.3.2:0, tag: 20002
+        remote binding: tsr: 10.1.3.3:0, tag: 30001
+  tib entry: 10.1.1.16/30, rev 16
+        local binding:  tag: 10002
+        remote binding: tsr: 10.1.3.2:0, tag: imp-null
+        remote binding: tsr: 10.1.3.11:0, tag: 110005
+        remote binding: tsr: 10.1.3.3:0, tag: imp-null
+  tib entry: 10.1.1.20/30, rev 18
+        local binding:  tag: 10003
+        remote binding: tsr: 10.1.3.2:0, tag: imp-null
+        remote binding: tsr: 10.1.3.11:0, tag: 110006
+        remote binding: tsr: 10.1.3.3:0, tag: 30002
+  tib entry: 10.1.1.24/30, rev 20
+        local binding:  tag: 10004
+        remote binding: tsr: 10.1.3.2:0, tag: imp-null
+        remote binding: tsr: 10.1.3.11:0, tag: 110007
+        remote binding: tsr: 10.1.3.3:0, tag: 30003
+  tib entry: 10.1.2.0/30, rev 10
+        local binding:  tag: imp-null
+        remote binding: tsr: 10.1.3.11:0, tag: imp-null
+        remote binding: tsr: 10.1.3.2:0, tag: 20011
+        remote binding: tsr: 10.1.3.3:0, tag: 30004
+  tib entry: 10.1.2.4/30, rev 22
+        local binding:  tag: 10005
+        remote binding: tsr: 10.1.3.2:0, tag: imp-null
+        remote binding: tsr: 10.1.3.11:0, tag: 110008
+        remote binding: tsr: 10.1.3.3:0, tag: 30005
+  tib entry: 10.1.2.8/30, rev 32
+        local binding:  tag: 10010
+        remote binding: tsr: 10.1.3.2:0, tag: 20003
+        remote binding: tsr: 10.1.3.11:0, tag: 110013
+        remote binding: tsr: 10.1.3.3:0, tag: imp-null
+  tib entry: 10.1.2.12/30, rev 36
+        local binding:  tag: 10012
+        remote binding: tsr: 10.1.3.2:0, tag: 20004
+        remote binding: tsr: 10.1.3.11:0, tag: 110012
+        remote binding: tsr: 10.1.3.3:0, tag: 30006
+  tib entry: 10.1.2.16/30, rev 34
+        local binding:  tag: 10011
+        remote binding: tsr: 10.1.3.2:0, tag: 20005
+        remote binding: tsr: 10.1.3.11:0, tag: 110015
+        remote binding: tsr: 10.1.3.3:0, tag: 30007
+  tib entry: 10.1.3.1/32, rev 2
+        local binding:  tag: imp-null
+        remote binding: tsr: 10.1.3.11:0, tag: 110000
+        remote binding: tsr: 10.1.3.2:0, tag: 20009
+        remote binding: tsr: 10.1.3.3:0, tag: 30008
+
+
+P1#show tag-switching forwarding-table 10.1.3.11 detail 
+% Command accepted but obsolete, unreleased or unsupported; see documentation.
+
+Local      Outgoing   Prefix           Bytes Label   Outgoing   Next Hop    
+Label      Label      or Tunnel Id     Switched      interface              
+10000      Pop Label  10.1.3.11/32     85712         Gi6        10.1.2.2    
+        MAC/Encaps=14/14, MRU=1504, Label Stack{}
+        525400116F685254000FE1BA8847 
+        No output feature configured
+P1#
+
+PE1#traceroute mpls ipv4 10.1.3.1 255.255.255.255
+Tracing MPLS Label Switched Path to 10.1.3.1/32, timeout is 2 seconds
+
+Codes: '!' - success, 'Q' - request not sent, '.' - timeout,
+  'L' - labeled output interface, 'B' - unlabeled output interface, 
+  'D' - DS Map mismatch, 'F' - no FEC mapping, 'f' - FEC mismatch,
+  'M' - malformed request, 'm' - unsupported tlvs, 'N' - no label entry, 
+  'P' - no rx intf label prot, 'p' - premature termination of LSP, 
+  'R' - transit router, 'I' - unknown upstream index,
+  'l' - Label switched with FEC change, 'd' - see DDMAP for return code,
+  'X' - unknown return code, 'x' - return code 0
+
+Type escape sequence to abort.
+  0 10.1.2.2 MRU 1500 [Labels: implicit-null Exp: 0]
+! 1 10.1.2.1 48 ms
+
+
