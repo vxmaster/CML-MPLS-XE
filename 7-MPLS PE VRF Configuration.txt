@@ -1,0 +1,259 @@
+7-MPLS PE VRF configurations.
+###PE1
+
+PE1#show run | sec vrf
+vrf definition CCTV
+ description CCTV
+ rd 64555:20
+ vpn id 64555:20
+ !
+ address-family ipv4
+  route-target export 64555:20
+  route-target import 64555:20
+ exit-address-family
+vrf definition DATA
+ description DATA
+ rd 64555:10
+ vpn id 64555:10
+ !
+ address-family ipv4
+  route-target export 64555:10
+  route-target import 64555:10
+ exit-address-family
+vrf definition IPTV
+ description IPTV
+ rd 64555:30
+ vpn id 64555:30
+ !
+ address-family ipv4
+  route-target export 64555:30
+  route-target import 64555:30
+ exit-address-family
+vrf definition VOIP
+ description VOIP
+ rd 64555:40
+ vpn id 64555:40
+ !
+
+ PE1# show run | sec router bgp 64555
+router bgp 64555
+ bgp router-id 10.1.3.11
+ bgp log-neighbor-changes
+ no bgp default ipv4-unicast
+ neighbor VX-RR peer-group
+ neighbor VX-RR remote-as 64555
+ neighbor VX-RR log-neighbor-changes
+ neighbor VX-RR update-source Loopback0
+ neighbor 10.1.3.1 peer-group VX-RR
+ neighbor 10.1.3.2 peer-group VX-RR
+ neighbor 10.1.3.3 peer-group VX-RR
+ neighbor 10.1.3.4 peer-group VX-RR
+ !
+ address-family ipv4
+ exit-address-family
+ !
+ address-family ipv4 mvpn
+  neighbor VX-RR send-community extended
+  neighbor 10.1.3.1 activate
+  neighbor 10.1.3.2 activate
+  neighbor 10.1.3.3 activate
+  neighbor 10.1.3.4 activate
+ exit-address-family
+ !        
+ address-family vpnv4
+  neighbor VX-RR send-community extended
+  neighbor 10.1.3.1 activate
+  neighbor 10.1.3.2 activate
+  neighbor 10.1.3.3 activate
+  neighbor 10.1.3.4 activate
+ exit-address-family
+ !
+ address-family ipv4 mdt
+  neighbor VX-RR send-community extended
+  neighbor 10.1.3.1 activate
+  neighbor 10.1.3.2 activate
+  neighbor 10.1.3.3 activate
+  neighbor 10.1.3.4 activate
+ exit-address-family
+ !
+ address-family l2vpn vpls
+  neighbor VX-RR send-community extended
+  neighbor 10.1.3.1 activate
+  neighbor 10.1.3.2 activate
+  neighbor 10.1.3.3 activate
+  neighbor 10.1.3.4 activate
+ exit-address-family
+ !
+ address-family l2vpn evpn
+  neighbor VX-RR send-community both
+  neighbor 10.1.3.1 activate
+  neighbor 10.1.3.2 activate
+  neighbor 10.1.3.3 activate
+  neighbor 10.1.3.4 activate
+ exit-address-family
+ !
+ address-family rtfilter unicast
+  neighbor VX-RR send-community extended
+  neighbor 10.1.3.1 activate
+  neighbor 10.1.3.2 activate
+  neighbor 10.1.3.3 activate
+  neighbor 10.1.3.4 activate
+ exit-address-family
+ !
+ address-family ipv4 vrf CCTV
+  redistribute connected
+  redistribute static
+ exit-address-family
+ !
+ address-family ipv4 vrf DATA
+  redistribute connected
+  redistribute static
+ exit-address-family
+ !
+ address-family ipv4 vrf IPTV
+  redistribute connected
+  redistribute static
+ exit-address-family
+ !
+ address-family ipv4 vrf VOIP
+  redistribute connected
+  redistribute static
+ exit-address-family
+
+ 
+
+  PE1#show run | sec GigabitEthernet1
+interface GigabitEthernet1
+ description not connected
+ no ip address
+ negotiation auto
+ no mop enabled
+ no mop sysid
+interface GigabitEthernet1.10
+ description DATA
+ encapsulation dot1Q 10
+ vrf forwarding DATA
+ ip address 10.10.1.1 255.255.255.0
+interface GigabitEthernet1.20
+ description CCTV
+ encapsulation dot1Q 20
+ vrf forwarding CCTV
+ ip address 10.20.1.1 255.255.255.0
+interface GigabitEthernet1.30
+ description IPTV
+ encapsulation dot1Q 30
+ vrf forwarding IPTV
+ ip address 10.30.1.1 255.255.255.0
+interface GigabitEthernet1.40
+ encapsulation dot1Q 40
+ vrf forwarding VOIP
+ ip address 10.40.1.1 255.255.255.0
+
+ ###PE3 Configuration 
+
+
+  PE3#show run | sec GigabitEthernet1 
+interface GigabitEthernet1
+ description not connected
+ no ip address
+ negotiation auto
+ no mop enabled
+ no mop sysid
+interface GigabitEthernet1.10
+ description DATA
+ encapsulation dot1Q 10
+ vrf forwarding DATA
+ ip address 10.10.3.1 255.255.255.0
+interface GigabitEthernet1.20
+ description CCTV
+ encapsulation dot1Q 20
+ vrf forwarding CCTV
+ ip address 10.20.3.1 255.255.255.0
+interface GigabitEthernet1.30
+ description IPTV
+ encapsulation dot1Q 30
+ vrf forwarding IPTV
+ ip address 10.30.3.1 255.255.255.0
+interface GigabitEthernet1.40
+ description VOICE
+ encapsulation dot1Q 40
+ vrf forwarding VOIP
+ ip address 10.40.3.1 255.255.255.0
+
+
+###CE1
+
+CE1(config)#do show run | sec ip route
+ip route 10.10.0.0 255.255.0.0 10.10.1.1
+ip route 10.10.0.0 255.255.0.0 10.20.1.1
+ip route 10.10.0.0 255.255.0.0 10.30.1.1
+ip route 10.10.0.0 255.255.0.0 10.40.1.1
+
+CE1#show run | sec GigabitEthernet0
+interface GigabitEthernet0/0
+ no ip address
+ duplex auto
+ speed auto
+ media-type rj45
+interface GigabitEthernet0/0.10
+ description DATA
+ encapsulation dot1Q 10
+ ip address 10.10.1.2 255.255.255.0
+interface GigabitEthernet0/0.20
+ description CCTV
+ encapsulation dot1Q 20
+ ip address 10.20.1.2 255.255.255.0
+interface GigabitEthernet0/0.30
+ description IPTV
+ encapsulation dot1Q 30
+ ip address 10.30.1.2 255.255.255.0
+interface GigabitEthernet0/0.40
+ description VOICE
+ encapsulation dot1Q 40
+ ip address 10.40.1.2 255.255.255.0
+interface GigabitEthernet0/1
+
+
+
+###CE3
+
+E3(config)#do show run | sec ip route
+ip route 10.10.0.0 255.255.0.0 10.10.3.1
+ip route 10.10.0.0 255.255.0.0 10.20.3.1
+ip route 10.10.0.0 255.255.0.0 10.30.3.1
+ip route 10.10.0.0 255.255.0.0 10.40.3.1
+
+
+CE3#show run | sec GigabitEthernet0 
+interface GigabitEthernet0/0
+ no ip address
+ duplex auto
+ speed auto
+ media-type rj45
+interface GigabitEthernet0/0.10
+ description DATA
+ encapsulation dot1Q 10
+ ip address 10.10.3.2 255.255.255.0
+interface GigabitEthernet0/0.20
+ description CCTV
+ encapsulation dot1Q 20
+ ip address 10.20.3.2 255.255.255.0
+interface GigabitEthernet0/0.30
+ description IPTV
+ encapsulation dot1Q 30
+ ip address 10.30.3.2 255.255.255.0
+interface GigabitEthernet0/0.40
+ description VOIP
+ encapsulation dot1Q 40
+ ip address 10.40.3.2 255.255.255.0
+interface GigabitEthernet0/1
+
+
+###Check Configuration
+ PE1# show vrf
+  Name                             Default RD            Protocols   Interfaces
+  CCTV                             64555:20              ipv4        
+  DATA                             64555:10              ipv4        
+  IPTV                             64555:30              ipv4        
+  VOIP                             64555:40              ipv4        
+  
