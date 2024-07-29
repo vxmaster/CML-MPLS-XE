@@ -1,0 +1,466 @@
+8-MPLS (mVPN mLDP Profile 14 Partitioned MDT - MLDP P2MP - BGP-AD - BGP C-mast Signaling)
+PE1 Client PE2 Rendezous Point PE3 Source ONLY work on vrf CCTV
+
+
+###PE1
+
+PE1#show run | sec vrf definition
+vrf definition CCTV
+ description CCTV
+ rd 64555:20
+ vpn id 64555:20
+ !
+ address-family ipv4
+  mdt auto-discovery mldp inter-as
+  mdt strict-rpf interface
+  mdt partitioned mldp p2mp
+  mdt overlay use-bgp
+  route-target export 64555:20
+  route-target import 64555:20
+ exit-address-family
+
+ PE1#show run | sec router bgp
+router bgp 64555
+ bgp router-id 10.1.3.11
+ bgp log-neighbor-changes
+ no bgp default ipv4-unicast
+ neighbor VX-RR peer-group
+ neighbor VX-RR remote-as 64555
+ neighbor VX-RR log-neighbor-changes
+ neighbor VX-RR update-source Loopback0
+ neighbor 10.1.3.1 peer-group VX-RR
+ neighbor 10.1.3.2 peer-group VX-RR
+ neighbor 10.1.3.3 peer-group VX-RR
+ neighbor 10.1.3.4 peer-group VX-RR
+ !
+ address-family ipv4
+ exit-address-family
+ !
+ address-family ipv4 mvpn
+  neighbor VX-RR send-community extended
+  neighbor 10.1.3.1 activate
+  neighbor 10.1.3.2 activate
+  neighbor 10.1.3.3 activate
+  neighbor 10.1.3.4 activate
+ exit-address-family
+ !        
+ address-family vpnv4
+  neighbor VX-RR send-community extended
+  neighbor 10.1.3.1 activate
+  neighbor 10.1.3.2 activate
+  neighbor 10.1.3.3 activate
+  neighbor 10.1.3.4 activate
+ exit-address-family
+ !
+ address-family ipv4 mdt
+  neighbor VX-RR send-community extended
+  neighbor 10.1.3.1 activate
+  neighbor 10.1.3.2 activate
+  neighbor 10.1.3.3 activate
+  neighbor 10.1.3.4 activate
+ exit-address-family
+ !
+ address-family l2vpn vpls
+  neighbor VX-RR send-community extended
+  neighbor 10.1.3.1 activate
+  neighbor 10.1.3.2 activate
+  neighbor 10.1.3.3 activate
+  neighbor 10.1.3.4 activate
+ exit-address-family
+ !
+ address-family l2vpn evpn
+  neighbor VX-RR send-community both
+  neighbor 10.1.3.1 activate
+  neighbor 10.1.3.2 activate
+  neighbor 10.1.3.3 activate
+  neighbor 10.1.3.4 activate
+ exit-address-family
+ !
+ address-family rtfilter unicast
+  neighbor VX-RR send-community extended
+  neighbor 10.1.3.1 activate
+  neighbor 10.1.3.2 activate
+  neighbor 10.1.3.3 activate
+  neighbor 10.1.3.4 activate
+ exit-address-family
+ !
+ address-family ipv4 vrf CCTV
+  redistribute connected
+  redistribute static
+ exit-address-family
+ !
+ address-family ipv4 vrf DATA
+  redistribute connected
+  redistribute static
+ exit-address-family
+ !
+ address-family ipv4 vrf IPTV
+  redistribute connected
+  redistribute static
+ exit-address-family
+ !
+ address-family ipv4 vrf VOIP
+  redistribute connected
+  redistribute static
+ exit-address-family
+
+
+interface GigabitEthernet1.20
+ description CCTV
+ encapsulation dot1Q 20
+ vrf forwarding CCTV
+ ip address 10.20.1.1 255.255.255.0
+ ip pim sparse-mode
+end
+
+PE1#show run | sec ip multi
+ip multicast-routing distributed
+ip multicast-routing vrf CCTV distributed
+ip pim ssm default
+
+PE1#show ip pim vrf CCTV inter
+
+Address          Interface                Ver/   Nbr    Query  DR         DR
+                                          Mode   Count  Intvl  Prior
+10.1.3.11        Lspvif0                  v2/S   0      30     1          10.1.3.11
+10.20.1.1        GigabitEthernet1.20      v2/S   0      30     1          10.20.1.1
+
+
+
+
+###PE2
+PE2#show run inter lo 20254
+Building configuration...
+
+Current configuration : 137 bytes
+!
+interface Loopback20254
+ description CCTV-RP-0
+ vrf forwarding CCTV
+ ip address 10.20.254.254 255.255.255.255
+ ip pim sparse-mode
+end
+
+PE2#show run | sec ip pim 
+ip pim ssm default
+ip pim vrf CCTV bsr-candidate Loopback20254 0
+ip pim vrf CCTV rp-candidate Loopback20254
+
+PE2#show run | sec ip multi
+ip multicast-routing distributed
+ip multicast-routing vrf CCTV distributed
+
+
+PE2#show run | sec vrf definition
+vrf definition CCTV
+ description CCTV
+ rd 64555:20
+ vpn id 64555:20
+ !
+ address-family ipv4
+  mdt auto-discovery mldp inter-as
+  mdt strict-rpf interface
+  mdt partitioned mldp p2mp
+  mdt overlay use-bgp
+  route-target export 64555:20
+  route-target import 64555:20
+ exit-address-family
+
+
+
+PE2#show run | sec router bgp 
+router bgp 64555
+ bgp router-id 10.1.3.12
+ bgp log-neighbor-changes
+ no bgp default ipv4-unicast
+ neighbor VX-RR peer-group
+ neighbor VX-RR remote-as 64555
+ neighbor VX-RR log-neighbor-changes
+ neighbor VX-RR update-source Loopback0
+ neighbor 10.1.3.1 peer-group VX-RR
+ neighbor 10.1.3.2 peer-group VX-RR
+ neighbor 10.1.3.3 peer-group VX-RR
+ neighbor 10.1.3.4 peer-group VX-RR
+ !
+ address-family ipv4
+ exit-address-family
+ !
+ address-family ipv4 mvpn
+  neighbor VX-RR send-community extended
+  neighbor 10.1.3.1 activate
+  neighbor 10.1.3.2 activate
+  neighbor 10.1.3.3 activate
+  neighbor 10.1.3.4 activate
+ exit-address-family
+ !        
+ address-family vpnv4
+  neighbor VX-RR send-community extended
+  neighbor 10.1.3.1 activate
+  neighbor 10.1.3.2 activate
+  neighbor 10.1.3.3 activate
+  neighbor 10.1.3.4 activate
+ exit-address-family
+ !
+ address-family ipv4 mdt
+  neighbor VX-RR send-community extended
+  neighbor 10.1.3.1 activate
+  neighbor 10.1.3.2 activate
+  neighbor 10.1.3.3 activate
+  neighbor 10.1.3.4 activate
+ exit-address-family
+ !
+ address-family l2vpn vpls
+  neighbor VX-RR send-community extended
+  neighbor 10.1.3.1 activate
+  neighbor 10.1.3.2 activate
+  neighbor 10.1.3.3 activate
+  neighbor 10.1.3.4 activate
+ exit-address-family
+ !
+ address-family l2vpn evpn
+  neighbor VX-RR send-community both
+  neighbor 10.1.3.1 activate
+  neighbor 10.1.3.2 activate
+  neighbor 10.1.3.3 activate
+  neighbor 10.1.3.4 activate
+ exit-address-family
+ !
+ address-family rtfilter unicast
+  neighbor VX-RR send-community extended
+  neighbor 10.1.3.1 activate
+  neighbor 10.1.3.2 activate
+  neighbor 10.1.3.3 activate
+  neighbor 10.1.3.4 activate
+ exit-address-family
+ !
+ address-family ipv4 vrf CCTV
+  redistribute connected
+  redistribute static
+ exit-address-family
+ !
+ address-family ipv4 vrf DATA
+  redistribute connected
+  redistribute static
+ exit-address-family
+ !
+ address-family ipv4 vrf IPTV
+  redistribute connected
+  redistribute static
+ exit-address-family
+ !
+ address-family ipv4 vrf VOIP
+  redistribute connected
+  redistribute static
+ exit-address-family
+
+
+PE2#show ip pim vrf CCTV interface 
+
+Address          Interface                Ver/   Nbr    Query  DR         DR
+                                          Mode   Count  Intvl  Prior
+10.20.254.254    Loopback20254            v2/S   0      30     1          10.20.254.254
+10.1.3.12        Lspvif0                  v2/S   0      30     1          10.1.3.12
+
+ ###PE3
+PE3#show run | sec vrf definition
+vrf definition CCTV
+ description CCTV
+ rd 64555:20
+ vpn id 64555:20
+ !
+ address-family ipv4
+  mdt auto-discovery mldp inter-as
+  mdt strict-rpf interface
+  mdt partitioned mldp p2mp
+  mdt overlay use-bgp
+  route-target export 64555:20
+  route-target import 64555:20
+ exit-address-family
+
+PE3#show run | sec ip mult
+ip multicast-routing distributed
+ip multicast-routing vrf CCTV distributed
+
+ip pim ssm default
+
+ip multicast-routing vrf CCTV distributed
+PE3#show run inter gi 1.20
+Building configuration...
+
+Current configuration : 187 bytes
+!
+interface GigabitEthernet1.20
+ description CCTV
+ encapsulation dot1Q 20
+ vrf forwarding CCTV
+ ip address 10.20.3.1 255.255.255.0
+ ip pim sparse-mode
+ ip igmp join-group 224.20.3.1
+
+ PE3#show ip pim vrf CCTV interface 
+
+Address          Interface                Ver/   Nbr    Query  DR         DR
+                                          Mode   Count  Intvl  Prior
+10.1.3.13        Lspvif0                  v2/S   0      30     1          10.1.3.13
+10.20.3.1        GigabitEthernet1.20      v2/S   0      30     1          10.20.3.1
+10.1.3.13        Lspvif1                  v2/S   0      30     1          10.1.3.13
+PE3#
+
+###Test multicast
+E1#ping vrf CCTV 224.20.3.1
+Type escape sequence to abort.
+Sending 1, 100-byte ICMP Echos to 224.20.3.1, timeout is 2 seconds:
+
+Reply to request 0 from 10.20.3.1, 62 ms
+PE1#
+*Jul  8 17:50:59.719: %LINEPROTO-5-UPDOWN: Line protocol on Interface Lspvif1, changed state to up
+PE1#
+*Jul  8 17:51:01.429: %PIM-5-DRCHG: VRF CCTV: DR change from neighbor 0.0.0.0 to 10.1.3.11 on interface Lspvif1
+PE1#
+
+PE1#show ip igmp vrf CCTV groups 
+IGMP Connected Group Membership
+Group Address    Interface                Uptime    Expires   Last Reporter   Group Accounted
+224.0.1.40       Lspvif0                  10:21:54  00:02:38  10.1.3.14       
+PE1#
+
+PE1#show ip pim vrf CCTV rp
+Group: 224.20.3.1, RP: 10.20.254.254, uptime 01:16:07, expires 00:02:16
+
+PE1#show ip pim vrf CCTV  rp mapping 
+PIM Group-to-RP Mappings
+
+Group(s) 224.0.0.0/4
+  RP 10.20.254.254 (?), v2
+    Info source: 10.20.254.253 (?), via bootstrap, priority 0, holdtime 150
+         Uptime: 01:16:30, expires: 00:01:53
+
+PE3#show ip igmp vrf CCTV membership 
+Flags: A  - aggregate, T - tracked
+       L  - Local, S - static, V - virtual, R - Reported through v3 
+       I - v3lite, U - Urd, M - SSM (S,G) channel 
+       1,2,3 - The version of IGMP, the group is in
+Channel/Group-Flags: 
+       / - Filtering entry (Exclude mode (S,G), Include mode (G))
+Reporter:
+       <mac-or-ip-address> - last reporter if group is not explicitly tracked
+       <n>/<m>      - <n> reporter in include mode, <m> reporter in exclude
+
+ Channel/Group                  Reporter        Uptime   Exp.  Flags  Interface 
+ *,224.20.3.1                   10.20.3.1       01:10:50 02:15 2LA    Gi1.20
+ *,224.0.1.40                   10.1.3.13       10:22:37 02:32 2LA    Ls0
+
+
+ PE1#show ip mroute vrf CCTV summary 
+IP Multicast Routing Table
+Flags: D - Dense, S - Sparse, B - Bidir Group, s - SSM Group, C - Connected,
+       L - Local, P - Pruned, R - RP-bit set, F - Register flag,
+       T - SPT-bit set, J - Join SPT, M - MSDP created entry, E - Extranet,
+       X - Proxy Join Timer Running, A - Candidate for MSDP Advertisement,
+       U - URD, I - Received Source Specific Host Report, 
+       Z - Multicast Tunnel, z - MDT-data group sender, 
+       Y - Joined MDT-data group, y - Sending to MDT-data group, 
+       G - Received BGP C-Mroute, g - Sent BGP C-Mroute, 
+       N - Received BGP Shared-Tree Prune, n - BGP C-Mroute suppressed, 
+       Q - Received BGP S-A Route, q - Sent BGP S-A Route, 
+       V - RD & Vector, v - Vector, p - PIM Joins on route, 
+       x - VxLAN group, c - PFP-SA cache created entry, 
+       * - determined by Assert, # - iif-starg configured on rpf intf, 
+       e - encap-helper tunnel flag, l - LISP Decap Refcnt Contributor
+Outgoing interface flags: H - Hardware switched, A - Assert winner, p - PIM Join
+ Timers: Uptime/Expires
+ Interface state: Interface, Next-Hop or VCD, State/Mode
+
+(*, 224.20.3.1), 00:02:55/stopped, RP 10.20.254.254, OIF count: 0, flags: SPF
+  (10.20.1.1, 224.20.3.1), 00:02:55/00:02:56, OIF count: 1, flags: FTGq
+
+(*, 224.0.1.40), 01:14:12/00:02:41, RP 0.0.0.0, OIF count: 1, flags: DCL
+          
+E1#mtrace vrf CCTV 10.20.3.1 224.20.3.1
+Type escape sequence to abort.
+Mtrace from 10.20.3.1 to 10.20.1.1 via group 224.20.3.1 in VRF CCTV
+From source (?) to destination (?)
+Querying full reverse path... * switching to hop-by-hop:
+ 0  10.20.1.1
+-1  10.20.1.1 ==> 10.1.3.11 PIM/MBGP  [using shared tree]
+-2  * * * 10.1.3.12
+PE1#show mpls mldp database 
+  * For interface indicates MLDP recursive forwarding is enabled
+  * For RPF-ID indicates wildcard value
+  > Indicates it is a Primary MLDP MDT Branch
+
+LSM ID : 1   Type: P2MP   Uptime : 10:32:59
+  FEC Root           : 10.1.3.11 (we are the root)
+  Opaque decoded     : [gid 65536 (0x00010000)] 
+  Opaque length      : 4 bytes
+  Opaque value       : 01 0004 00010000
+  Upstream client(s) :
+    None
+      Expires        : N/A           Path Set ID  : 1
+  Replication client(s): 
+>   MDT  (VRF CCTV)
+      Uptime         : 10:32:59      Path Set ID  : None
+      Interface      : Lspvif0       RPF-ID       : *
+    10.1.3.1:0 
+      Uptime         : 00:11:31      Path Set ID  : None
+      Out label (D)  : 10018         Interface    : GigabitEthernet6*
+      Local label (U): None          Next Hop     : 10.1.2.1
+
+LSM ID : 8   Type: P2MP   Uptime : 00:11:31
+  FEC Root           : 10.1.3.12 
+  Opaque decoded     : [gid 65536 (0x00010000)] 
+  Opaque length      : 4 bytes
+  Opaque value       : 01 0004 00010000
+  Upstream client(s) :
+    10.1.3.1:0    [Active]
+      Expires        : Never         Path Set ID  : 8
+      Out Label (U)  : None          Interface    : GigabitEthernet6*
+      Local Label (D): 110025        Next Hop     : 10.1.2.1
+  Replication client(s): 
+    MDT  (VRF CCTV)
+      Uptime         : 00:11:31      Path Set ID  : None
+      Interface      : Lspvif1       RPF-ID       : 0x1
+
+LSM ID : 4   Type: P2MP   Uptime : 05:05:31
+  FEC Root           : 10.1.3.14 
+  Opaque decoded     : [gid 131071 (0x0001FFFF)] 
+  Opaque length      : 4 bytes
+  Opaque value       : 01 0004 0001FFFF
+  Upstream client(s) :
+    10.1.3.1:0    [Active]
+      Expires        : Never         Path Set ID  : 4
+      Out Label (U)  : None          Interface    : GigabitEthernet6*
+      Local Label (D): 110024        Next Hop     : 10.1.2.1
+  Replication client(s): 
+    MDT  (VRF CCTV)
+      Uptime         : 05:05:31      Path Set ID  : None
+      Interface      : Lspvif0       RPF-ID       : *
+
+PE1# show mpls mldp bindings 
+System ID: 1
+Type: P2MP, Root Node: 10.1.3.11, Opaque Len: 7
+Opaque value: [gid 65536 (0x00010000)] 
+lsr: 10.1.3.1:0, remote binding[D]: 10018
+
+System ID: 8
+Type: P2MP, Root Node: 10.1.3.12, Opaque Len: 7
+Opaque value: [gid 65536 (0x00010000)] 
+lsr: 10.1.3.1:0, local binding[D]: 110025 active
+
+System ID: 4
+Type: P2MP, Root Node: 10.1.3.14, Opaque Len: 7
+Opaque value: [gid 131071 (0x0001FFFF)] 
+lsr: 10.1.3.1:0, local binding[D]: 110024 active
+
+
+E1#show mpls mldp count 
+MLDP Database Summary:
+  Number of MP2MP Entries : 0
+  Number of P2MP Entries  : 3
+  Total Number of Entries : 3
+
+MLDP Root Count:
+  Total Number of MLDP roots: 3
+
+MLDP Neighbor Count:
+  Total Number of MLDP neighbors: 1
