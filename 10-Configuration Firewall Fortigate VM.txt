@@ -454,7 +454,7 @@ end
 
 
 
-###Trouble Shooting Network and Multicast
+###TroubleShooting Network and Multicast
 FortiVM # get router 
 access-list       Configure access lists.
 access-list6      Configure IPv6 access lists.
