@@ -1,0 +1,1058 @@
+Configuration Firewall Fortigate VM
+
+
+###Configurations
+
+FortiVM # show router setting 
+config router setting
+    set hostname "FortiVMS"
+end
+FortiVM #    show system global 
+config system global
+    set alias "FortiGate-VM64-KVM"
+    set cfg-save manual
+    set gui-local-out enable
+    set hostname "FortiVM"
+    set timezone 04
+
+FortiVM # show system settings 
+config system settings
+    set allow-subnet-overlap enable * 
+    set gui-multicast-policy enable
+    set gui-local-in-policy enable
+    set gui-multiple-interface-policy enable
+end
+
+FortiVM #   show system interface 
+config system interface
+    edit "port1"
+        set vdom "root"
+        set mode dhcp
+        set allowaccess ping https ssh http fgfm
+        set type physical
+        set snmp-index 1
+    next
+    edit "port2"
+        set vdom "root"
+        set type physical
+        set snmp-index 2
+    next
+    edit "port3"
+        set vdom "root"
+        set type physical
+        set snmp-index 3
+    next
+    edit "port4"
+        set vdom "root"
+        set ip 192.168.144.254 255.255.255.0
+        set allowaccess ping http
+        set type physical
+        set snmp-index 4
+    next 
+    edit "naf.root"
+        set vdom "root"
+        set type tunnel
+        set src-check disable
+        set snmp-index 5
+    next
+    edit "l2t.root"
+        set vdom "root"
+        set type tunnel
+        set snmp-index 6
+    next
+    edit "ssl.root"
+        set vdom "root"
+        set type tunnel
+        set alias "SSL VPN interface"
+        set snmp-index 7
+    next
+    edit "fortilink"
+        set vdom "root"
+        set fortilink enable
+        set ip 10.255.1.1 255.255.255.0
+        set allowaccess ping fabric
+        set type aggregate
+        set lldp-reception enable
+        set lldp-transmission enable
+        set snmp-index 8
+    next
+    edit "DATA10"
+        set vdom "root"
+        set ip 172.16.10.254 255.255.255.252
+        set allowaccess ping
+        set role lan
+        set snmp-index 9
+        set interface "port1"
+        set vlanid 10
+    next
+    edit "CCTV20"
+        set vdom "root"
+        set ip 172.16.20.254 255.255.255.252
+        set allowaccess ping
+        set device-identification enable
+        set role lan
+        set snmp-index 10
+        set interface "port1"
+        set vlanid 20
+    next
+    edit "IPTV30"
+        set vdom "root"
+        set ip 172.16.30.254 255.255.255.252
+        set allowaccess ping
+        set device-identification enable
+        set role lan
+        set snmp-index 11
+        set interface "port1"
+        set vlanid 30
+    next
+    edit "VOIP40"
+        set vdom "root"
+        set ip 172.16.40.254 255.255.255.252
+        set allowaccess ping
+        set device-identification enable
+        set role lan
+        set snmp-index 12
+        set interface "port1"
+        set vlanid 40
+    next
+    edit "MTRP"
+        set vdom "root"
+        set ip 172.16.254.254 255.255.255.252
+        set allowaccess ping
+        set device-identification enable
+        set role lan
+        set snmp-index 13
+        set interface "port1"
+        set vlanid 254
+    next
+    edit "lo10"
+        set vdom "root"
+        set ip 172.16.10.2 255.255.255.252
+        set allowaccess ping
+        set type loopback
+        set snmp-index 14
+    next
+    edit "lo20"
+        set vdom "root"
+        set ip 172.16.20.2 255.255.255.252
+        set allowaccess ping
+        set type loopback
+        set snmp-index 15
+    next
+    edit "lo30"
+        set vdom "root"
+        set ip 172.16.30.2 255.255.255.252
+        set allowaccess ping
+        set type loopback
+        set snmp-index 16
+    next
+    edit "lo40"
+        set vdom "root"
+        set ip 172.16.40.2 255.255.255.252
+        set allowaccess ping
+        set type loopback
+        set snmp-index 17
+    next
+    edit "lo54"
+        set vdom "root"
+        set ip 172.16.254.2 255.255.255.255
+        set allowaccess ping
+        set type loopback
+        set snmp-index 18
+    next
+end
+
+FortiVM # show router bgp 
+config router bgp
+    set as 65255
+    set router-id 172.16.254.255
+    set graceful-restart enable
+    config neighbor
+        edit "172.16.10.253"
+            set capability-graceful-restart enable
+            set soft-reconfiguration enable
+            set as-override enable
+            set description "DATA"
+            set interface "DATA10"
+            set remote-as 64555
+            set update-source "lo10"
+        next
+        edit "172.16.20.253"
+            set capability-graceful-restart enable
+            set soft-reconfiguration enable
+            set as-override enable
+            set description "CCTV"
+            set interface "CCTV20"
+            set remote-as 64555
+            set update-source "lo20"
+        next
+        edit "172.16.40.253"
+            set capability-graceful-restart enable
+            set soft-reconfiguration enable
+            set as-override enable
+            set description "VOIP"
+            set interface "VOIP40"
+            set remote-as 64555
+            set update-source "lo40"
+        next
+        edit "172.16.254.253"
+            set capability-graceful-restart enable
+            set soft-reconfiguration enable
+            set as-override enable
+            set description "MTRP"
+            set interface "MTRP"
+            set remote-as 64555
+            set update-source "lo54"
+        next
+        edit "172.16.30.253"
+            set capability-graceful-restart enable
+            set soft-reconfiguration enable
+            set as-override enable
+            set description "IPTV"
+            set interface "IPTV30"
+            set remote-as 64555
+            set update-source "lo30"
+        next
+    end
+    config network6
+        edit 1
+            set prefix6 ::/128
+        next
+    end
+    config redistribute "connected"
+        set status enable
+    end
+    config redistribute "rip"
+    end
+    config redistribute "ospf"
+    end
+    config redistribute "static"
+        set status enable
+    end
+    config redistribute "isis"
+    end
+    config redistribute6 "connected"
+    end
+    config redistribute6 "rip"
+    end
+    config redistribute6 "ospf"
+    end
+    config redistribute6 "static"
+    end
+    config redistribute6 "isis"
+    end
+end
+
+FortiVM #   show router  multicast 
+config router multicast
+    set multicast-routing enable
+    config interface
+        edit "DATA10"
+            set pim-mode sparse-mode
+        next
+        edit "MTRP"
+            set pim-mode sparse-mode
+        next
+        edit "lo10"
+            set pim-mode sparse-mode
+        next
+        edit "lo54"
+            set pim-mode sparse-mode
+        next
+        edit "CCTV20"
+            set pim-mode sparse-mode
+        next
+        edit "IPTV30"
+            set pim-mode sparse-mode
+        next
+        edit "VOIP40"
+            set pim-mode sparse-mode
+        next
+        edit "lo20"
+            set pim-mode sparse-mode
+        next
+        edit "lo30"
+            set pim-mode sparse-mode
+        next
+        edit "lo40"
+            set pim-mode sparse-mode
+        next
+    end
+end
+
+FortiVM # show firewall policy 
+config firewall policy
+    edit 1
+        set name "PE4toALLVRF"
+        set uuid 5a2585b4-53cf-51ef-a889-8db65064adbb
+        set srcintf "any"
+        set dstintf "any"
+        set action accept
+        set srcaddr "all"
+        set dstaddr "all"
+        set schedule "always"
+        set service "ALL"
+        set logtraffic all
+    next
+end
+
+FortiVM # show firewall multicast-policy 
+config firewall multicast-policy
+    edit 1
+        set uuid 9ecfd016-57da-51ef-3873-072ac2154484
+        set name "MTRPtoALL"
+        set srcintf "any"
+        set dstintf "any"
+        set srcaddr "all"
+        set dstaddr "all"
+    next
+end
+
+FortiVM # get router 
+access-list       Configure access lists.
+access-list6      Configure IPv6 access lists.
+aspath-list       Configure Autonomous System (AS) path lists.
+auth-path         Configure authentication based routing.
+bfd               Configure BFD.
+bfd6              Configure IPv6 BFD.
+bgp               Configure BGP.
+community-list    Configure community lists.
+info              Show routing information.
+info6             Show IPv6 routing information.
+isis              Configure IS-IS.
+key-chain         Configure key-chain.
+multicast         Configure router multicast.
+multicast-flow    Configure multicast-flow.
+multicast6        Configure IPv6 multicast.
+ospf              Configure OSPF.
+ospf6             Configure IPv6 OSPF.
+policy            Configure IPv4 routing policies.
+policy6           Configure IPv6 routing policies.
+prefix-list       Configure IPv4 prefix lists.
+prefix-list6      Configure IPv6 prefix lists.
+rip               Configure RIP.
+ripng             Configure RIPng.
+route-map         Configure route maps.
+
+ 
+FortiVM # get router bgp 
+ <Enter>
+
+FortiVM # get router bgp 
+as                  : 65255
+router-id           : 172.16.254.255
+keepalive-timer     : 60
+holdtime-timer      : 180
+always-compare-med  : disable 
+bestpath-as-path-ignore: disable 
+bestpath-cmp-confed-aspath: disable 
+bestpath-cmp-routerid: disable 
+bestpath-med-confed : disable 
+bestpath-med-missing-as-worst: disable 
+client-to-client-reflection: enable 
+dampening           : disable 
+deterministic-med   : disable 
+ebgp-multipath      : disable 
+ibgp-multipath      : disable 
+enforce-first-as    : enable 
+fast-external-failover: enable 
+log-neighbour-changes: enable 
+network-import-check: enable 
+ignore-optional-capability: enable 
+multipath-recursive-distance: disable 
+recursive-next-hop  : disable 
+tag-resolve-mode    : disable 
+cluster-id          : 0.0.0.0
+confederation-identifier: 0
+default-local-preference: 100
+scan-time           : 60
+distance-external   : 20
+distance-internal   : 200
+distance-local      : 200
+synchronization     : disable 
+graceful-restart    : enable 
+graceful-end-on-timer: disable 
+aggregate-address:
+aggregate-address6:
+neighbor:
+    == [ 172.16.10.253 ]
+    ip:     172.16.10.253   
+    == [ 172.16.20.253 ]
+    ip:     172.16.20.253   
+    == [ 172.16.40.253 ]
+    ip:     172.16.40.253   
+    == [ 172.16.254.253 ]
+    ip:     172.16.254.253   
+    == [ 172.16.30.253 ]
+    ip:     172.16.30.253   
+neighbor-group:
+neighbor-range:
+neighbor-range6:
+network:
+network6:
+    == [ 1 ]
+    id:     1   
+redistribute:
+    == [ connected ]
+    name:     connected       status: enable            route-map:        
+    == [ rip ]
+    name:     rip       status: disable            route-map:        
+    == [ ospf ]
+    name:     ospf       status: disable            route-map:        
+    == [ static ]
+    name:     static       status: enable            route-map:        
+    == [ isis ]
+    name:     isis       status: disable            route-map:        
+redistribute6:
+    == [ connected ]
+    name:     connected       status: disable            route-map:        
+    == [ rip ]
+    name:     rip       status: disable            route-map:        
+    == [ ospf ]
+    name:     ospf       status: disable            route-map:        
+    == [ static ]
+    name:     static       status: disable            route-map:        
+    == [ isis ]
+    name:     isis       status: disable            route-map:        
+admin-distance:
+vrf:
+vrf6:
+graceful-restart-time: 120
+graceful-stalepath-time: 360
+graceful-update-delay: 120
+
+
+
+### This Configuration just extra it is not important
+FortiVM # show router prefix-list 
+config router prefix-list
+    edit "PFL-MTRP"
+        config rule
+            edit 254
+                set prefix 10.254.254.254 255.255.255.255
+                unset ge
+                unset le
+            next
+            edit 253
+                set prefix 10.254.254.253 255.255.255.255
+                unset ge
+                unset le
+            next
+        end
+    next
+end
+FortiVM # show router route-map
+config router route-map
+    edit "RM-MTRP"
+        config rule
+            edit 1
+                set match-ip-address "PFL-MTRP"
+            next
+        end
+    next
+end
+
+
+
+###Trouble Shooting Network and Multicast
+FortiVM # get router 
+access-list       Configure access lists.
+access-list6      Configure IPv6 access lists.
+aspath-list       Configure Autonomous System (AS) path lists.
+auth-path         Configure authentication based routing.
+bfd               Configure BFD.
+bfd6              Configure IPv6 BFD.
+bgp               Configure BGP.
+community-list    Configure community lists.
+info              Show routing information.
+info6             Show IPv6 routing information.
+isis              Configure IS-IS.
+key-chain         Configure key-chain.
+multicast         Configure router multicast.
+multicast-flow    Configure multicast-flow.
+multicast6        Configure IPv6 multicast.
+ospf              Configure OSPF.
+ospf6             Configure IPv6 OSPF.
+policy            Configure IPv4 routing policies.
+policy6           Configure IPv6 routing policies.
+prefix-list       Configure IPv4 prefix lists.
+prefix-list6      Configure IPv6 prefix lists.
+rip               Configure RIP.
+ripng             Configure RIPng.
+route-map         Configure route maps.
+
+ 
+FortiVM # get router bgp 
+ <Enter>
+
+FortiVM # get router bgp 
+as                  : 65255
+router-id           : 172.16.254.255
+keepalive-timer     : 60
+holdtime-timer      : 180
+always-compare-med  : disable 
+bestpath-as-path-ignore: disable 
+bestpath-cmp-confed-aspath: disable 
+bestpath-cmp-routerid: disable 
+bestpath-med-confed : disable 
+bestpath-med-missing-as-worst: disable 
+client-to-client-reflection: enable 
+dampening           : disable 
+deterministic-med   : disable 
+ebgp-multipath      : disable 
+ibgp-multipath      : disable 
+enforce-first-as    : enable 
+fast-external-failover: enable 
+log-neighbour-changes: enable 
+network-import-check: enable 
+ignore-optional-capability: enable 
+multipath-recursive-distance: disable 
+recursive-next-hop  : disable 
+tag-resolve-mode    : disable 
+cluster-id          : 0.0.0.0
+confederation-identifier: 0
+default-local-preference: 100
+scan-time           : 60
+distance-external   : 20
+distance-internal   : 200
+distance-local      : 200
+synchronization     : disable 
+graceful-restart    : enable 
+graceful-end-on-timer: disable 
+aggregate-address:
+aggregate-address6:
+neighbor:
+    == [ 172.16.10.253 ]
+    ip:     172.16.10.253   
+    == [ 172.16.20.253 ]
+    ip:     172.16.20.253   
+    == [ 172.16.40.253 ]
+    ip:     172.16.40.253   
+    == [ 172.16.254.253 ]
+    ip:     172.16.254.253   
+    == [ 172.16.30.253 ]
+    ip:     172.16.30.253   
+neighbor-group:
+neighbor-range:
+neighbor-range6:
+network:
+network6:
+    == [ 1 ]
+    id:     1   
+redistribute:
+    == [ connected ]
+    name:     connected       status: enable            route-map:        
+    == [ rip ]
+    name:     rip       status: disable            route-map:        
+    == [ ospf ]
+    name:     ospf       status: disable            route-map:        
+    == [ static ]
+    name:     static       status: enable            route-map:        
+    == [ isis ]
+    name:     isis       status: disable            route-map:        
+redistribute6:
+    == [ connected ]
+    name:     connected       status: disable            route-map:        
+    == [ rip ]
+    name:     rip       status: disable            route-map:        
+    == [ ospf ]
+    name:     ospf       status: disable            route-map:        
+    == [ static ]
+    name:     static       status: disable            route-map:        
+    == [ isis ]
+    name:     isis       status: disable            route-map:        
+admin-distance:
+vrf:
+vrf6:
+graceful-restart-time: 120
+graceful-stalepath-time: 360
+graceful-update-delay: 120
+
+
+ 
+FortiVM # get router   info routing-table details 
+Codes: K - kernel, C - connected, S - static, R - RIP, B - BGP
+       O - OSPF, IA - OSPF inter area
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2
+       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area
+       V - BGP VPNv4
+       * - candidate default
+
+Routing table for VRF=0
+B*      0.0.0.0/0 [20/0] via 172.16.10.253 (recursive is directly connected, DATA10), 00:59:41, [1/0]
+B       10.10.1.0/24 [20/0] via 172.16.10.253 (recursive is directly connected, DATA10), 00:59:41, [1/0]
+B       10.10.3.0/24 [20/0] via 172.16.10.253 (recursive is directly connected, DATA10), 00:59:41, [1/0]
+B       10.10.11.0/30 [20/0] via 172.16.10.253 (recursive is directly connected, DATA10), 00:59:41, [1/0]
+B       10.10.12.0/30 [20/0] via 172.16.10.253 (recursive is directly connected, DATA10), 00:59:41, [1/0]
+B       10.10.13.0/30 [20/0] via 172.16.10.253 (recursive is directly connected, DATA10), 00:59:41, [1/0]
+B       10.10.14.0/30 [20/0] via 172.16.10.253 (recursive is directly connected, DATA10), 00:59:41, [1/0]
+B       10.20.1.0/24 [20/0] via 172.16.20.253 (recursive is directly connected, CCTV20), 00:59:40, [1/0]
+B       10.20.3.0/24 [20/0] via 172.16.20.253 (recursive is directly connected, CCTV20), 00:59:40, [1/0]
+B       10.20.11.0/30 [20/0] via 172.16.20.253 (recursive is directly connected, CCTV20), 00:59:40, [1/0]
+B       10.20.12.0/30 [20/0] via 172.16.20.253 (recursive is directly connected, CCTV20), 00:59:40, [1/0]
+B       10.20.13.0/30 [20/0] via 172.16.20.253 (recursive is directly connected, CCTV20), 00:59:40, [1/0]
+B       10.20.14.0/30 [20/0] via 172.16.20.253 (recursive is directly connected, CCTV20), 00:59:40, [1/0]
+B       10.20.254.253/32 [20/0] via 172.16.20.253 (recursive is directly connected, CCTV20), 00:59:40, [1/0]
+B       10.20.254.254/32 [20/0] via 172.16.20.253 (recursive is directly connected, CCTV20), 00:59:40, [1/0]
+B       10.30.1.0/24 [20/0] via 172.16.30.253 (recursive is directly connected, IPTV30), 00:59:40, [1/0]
+B       10.30.3.0/24 [20/0] via 172.16.30.253 (recursive is directly connected, IPTV30), 00:59:40, [1/0]
+B       10.30.11.0/30 [20/0] via 172.16.30.253 (recursive is directly connected, IPTV30), 00:59:40, [1/0]
+B       10.30.12.0/30 [20/0] via 172.16.30.253 (recursive is directly connected, IPTV30), 00:59:40, [1/0]
+B       10.30.13.0/30 [20/0] via 172.16.30.253 (recursive is directly connected, IPTV30), 00:59:40, [1/0]
+B       10.30.14.0/30 [20/0] via 172.16.30.253 (recursive is directly connected, IPTV30), 00:59:40, [1/0]
+B       10.40.1.0/24 [20/0] via 172.16.40.253 (recursive is directly connected, VOIP40), 00:59:42, [1/0]
+B       10.40.3.0/24 [20/0] via 172.16.40.253 (recursive is directly connected, VOIP40), 00:59:42, [1/0]
+B       10.40.11.0/30 [20/0] via 172.16.40.253 (recursive is directly connected, VOIP40), 00:59:42, [1/0]
+B       10.40.12.0/30 [20/0] via 172.16.40.253 (recursive is directly connected, VOIP40), 00:59:42, [1/0]
+B       10.40.13.0/30 [20/0] via 172.16.40.253 (recursive is directly connected, VOIP40), 00:59:42, [1/0]
+B       10.40.14.0/30 [20/0] via 172.16.40.253 (recursive is directly connected, VOIP40), 00:59:42, [1/0]
+B       10.254.254.253/32 [20/0] via 172.16.254.253 (recursive is directly connected, MTRP), 00:59:44, [1/0]
+B       10.254.254.254/32 [20/0] via 172.16.254.253 (recursive is directly connected, MTRP), 00:59:44, [1/0]
+B       172.16.1.0/30 [20/0] via 172.16.10.253 (recursive is directly connected, DATA10), 00:59:41, [1/0]
+C       172.16.10.0/30 is directly connected, lo10
+C       172.16.10.252/30 is directly connected, DATA10
+C       172.16.20.0/30 is directly connected, lo20
+C       172.16.20.252/30 is directly connected, CCTV20
+C       172.16.30.0/30 is directly connected, lo30
+C       172.16.30.252/30 is directly connected, IPTV30
+C       172.16.40.0/30 is directly connected, lo40
+C       172.16.40.252/30 is directly connected, VOIP40
+C       172.16.254.2/32 is directly connected, lo54
+C       172.16.254.252/30 is directly connected, MTRP
+C       192.168.144.0/24 is directly connected, port4
+
+FortiVM # get router info bgp neighbors 
+VRF 0 neighbor table:
+BGP neighbor is 172.16.10.253, remote AS 64555, local AS 65255, external link
+  BGP version 4, remote router ID 172.16.10.253
+  BGP state = Established, up for 01:00:57
+  Last read 00:00:38, hold time is 180, keepalive interval is 60 seconds
+  Configured hold time is 180, keepalive interval is 60 seconds
+  Neighbor capabilities:
+    Route refresh: advertised and received (old and new)
+    Address family IPv4 Unicast: advertised and received
+    Address family VPNv4 Unicast: advertised
+    Address family IPv6 Unicast: advertised
+  Received 76 messages, 0 notifications, 0 in queue
+  Sent 75 messages, 0 notifications, 0 in queue
+  Route refresh request: received 0, sent 0
+  NLRI treated as withdraw: 0
+  Minimum time between advertisement runs is 30 seconds
+  Update source is lo10
+
+ For address family: IPv4 Unicast
+  BGP table version 4, neighbor version 4
+  Index 1, Offset 0, Mask 0x2
+  AF-dependant capabilities:
+    Graceful restart: advertised, received, negotiated
+
+  Inbound soft reconfiguration allowed
+  Community attribute sent to this neighbor (both)
+  9 accepted prefixes, 9 prefixes in rib
+  33 announced prefixes
+
+ For address family: VPNv4 Unicast
+  BGP table version 1, neighbor version 1
+  Index 1, Offset 0, Mask 0x2
+  Community attribute sent to this neighbor (both)
+  0 accepted prefixes, 0 prefixes in rib
+  0 announced prefixes
+
+ For address family: IPv6 Unicast
+  BGP table version 1, neighbor version 1
+  Index 1, Offset 0, Mask 0x2
+  Community attribute sent to this neighbor (both)
+  0 accepted prefixes, 0 prefixes in rib
+  0 announced prefixes
+
+ Connections established 1; dropped 0
+ Graceful-restart Status:
+  Remote restart-time is 120 sec
+
+Local host: 172.16.10.254, Local port: 179
+Foreign host: 172.16.10.253, Foreign port: 52392
+Egress interface: 12
+Nexthop: 172.16.10.254
+Nexthop interface: DATA10
+Nexthop global: ::
+Nexthop local: ::
+BGP connection: non shared network
+
+BGP neighbor is 172.16.20.253, remote AS 64555, local AS 65255, external link
+  BGP version 4, remote router ID 10.1.3.14
+  BGP state = Established, up for 01:00:56
+  Last read 00:00:09, hold time is 180, keepalive interval is 60 seconds
+  Configured hold time is 180, keepalive interval is 60 seconds
+  Neighbor capabilities:
+    Route refresh: advertised and received (old and new)
+    Address family IPv4 Unicast: advertised and received
+    Address family VPNv4 Unicast: advertised
+    Address family IPv6 Unicast: advertised
+  Received 75 messages, 0 notifications, 0 in queue
+  Sent 74 messages, 0 notifications, 0 in queue
+  Route refresh request: received 0, sent 0
+  NLRI treated as withdraw: 0
+  Minimum time between advertisement runs is 30 seconds
+  Update source is lo20
+         
+ For address family: IPv4 Unicast
+  BGP table version 4, neighbor version 4
+  Index 2, Offset 0, Mask 0x4
+  AF-dependant capabilities:
+    Graceful restart: advertised, received, negotiated
+
+  Inbound soft reconfiguration allowed
+  Community attribute sent to this neighbor (both)
+  9 accepted prefixes, 9 prefixes in rib
+  33 announced prefixes
+
+ For address family: VPNv4 Unicast
+  BGP table version 1, neighbor version 1
+  Index 2, Offset 0, Mask 0x4
+  Community attribute sent to this neighbor (both)
+  0 accepted prefixes, 0 prefixes in rib
+  0 announced prefixes
+
+ For address family: IPv6 Unicast
+  BGP table version 1, neighbor version 1
+  Index 2, Offset 0, Mask 0x4
+  Community attribute sent to this neighbor (both)
+  0 accepted prefixes, 0 prefixes in rib
+  0 announced prefixes
+
+ Connections established 1; dropped 0
+ Graceful-restart Status:
+  Remote restart-time is 120 sec
+
+Local host: 172.16.20.254, Local port: 179
+Foreign host: 172.16.20.253, Foreign port: 18677
+Egress interface: 13
+Nexthop: 172.16.20.254
+Nexthop interface: CCTV20
+Nexthop global: ::
+Nexthop local: ::
+BGP connection: non shared network
+
+BGP neighbor is 172.16.30.253, remote AS 64555, local AS 65255, external link
+  BGP version 4, remote router ID 10.1.3.14
+  BGP state = Established, up for 01:00:56
+  Last read 00:00:20, hold time is 180, keepalive interval is 60 seconds
+  Configured hold time is 180, keepalive interval is 60 seconds
+  Neighbor capabilities:
+    Route refresh: advertised and received (old and new)
+    Address family IPv4 Unicast: advertised and received
+    Address family VPNv4 Unicast: advertised
+    Address family IPv6 Unicast: advertised
+  Received 73 messages, 0 notifications, 0 in queue
+  Sent 75 messages, 0 notifications, 0 in queue
+  Route refresh request: received 0, sent 0
+  NLRI treated as withdraw: 0
+  Minimum time between advertisement runs is 30 seconds
+  Update source is lo30
+
+ For address family: IPv4 Unicast
+  BGP table version 4, neighbor version 4
+  Index 5, Offset 0, Mask 0x20
+  AF-dependant capabilities:
+    Graceful restart: advertised, received, negotiated
+
+  Inbound soft reconfiguration allowed
+  Community attribute sent to this neighbor (both)
+  7 accepted prefixes, 7 prefixes in rib
+  35 announced prefixes
+
+ For address family: VPNv4 Unicast
+  BGP table version 1, neighbor version 1
+  Index 5, Offset 0, Mask 0x20
+  Community attribute sent to this neighbor (both)
+  0 accepted prefixes, 0 prefixes in rib
+  0 announced prefixes
+
+ For address family: IPv6 Unicast
+  BGP table version 1, neighbor version 1
+  Index 5, Offset 0, Mask 0x20
+  Community attribute sent to this neighbor (both)
+  0 accepted prefixes, 0 prefixes in rib
+  0 announced prefixes
+
+ Connections established 1; dropped 0
+ Graceful-restart Status:
+  Remote restart-time is 120 sec
+
+Local host: 172.16.30.254, Local port: 179
+Foreign host: 172.16.30.253, Foreign port: 22073
+Egress interface: 14
+Nexthop: 172.16.30.254
+Nexthop interface: IPTV30
+Nexthop global: ::
+Nexthop local: ::
+BGP connection: non shared network
+
+BGP neighbor is 172.16.40.253, remote AS 64555, local AS 65255, external link
+  BGP version 4, remote router ID 10.1.3.14
+  BGP state = Established, up for 01:00:58
+  Last read 00:00:11, hold time is 180, keepalive interval is 60 seconds
+  Configured hold time is 180, keepalive interval is 60 seconds
+  Neighbor capabilities:
+    Route refresh: advertised and received (old and new)
+    Address family IPv4 Unicast: advertised and received
+    Address family VPNv4 Unicast: advertised
+    Address family IPv6 Unicast: advertised
+  Received 74 messages, 0 notifications, 0 in queue
+  Sent 77 messages, 0 notifications, 0 in queue
+  Route refresh request: received 0, sent 0
+  NLRI treated as withdraw: 0
+  Minimum time between advertisement runs is 30 seconds
+  Update source is lo40
+
+ For address family: IPv4 Unicast
+  BGP table version 4, neighbor version 4
+  Index 3, Offset 0, Mask 0x8
+  AF-dependant capabilities:
+    Graceful restart: advertised, received, negotiated
+
+  Inbound soft reconfiguration allowed
+  Community attribute sent to this neighbor (both)
+  7 accepted prefixes, 7 prefixes in rib
+  35 announced prefixes
+
+ For address family: VPNv4 Unicast
+  BGP table version 1, neighbor version 1
+  Index 3, Offset 0, Mask 0x8
+  Community attribute sent to this neighbor (both)
+  0 accepted prefixes, 0 prefixes in rib
+  0 announced prefixes
+
+ For address family: IPv6 Unicast
+  BGP table version 1, neighbor version 1
+  Index 3, Offset 0, Mask 0x8
+  Community attribute sent to this neighbor (both)
+  0 accepted prefixes, 0 prefixes in rib
+  0 announced prefixes
+
+ Connections established 1; dropped 0
+ Graceful-restart Status:
+  Remote restart-time is 120 sec
+
+Local host: 172.16.40.254, Local port: 179
+Foreign host: 172.16.40.253, Foreign port: 40203
+Egress interface: 15
+Nexthop: 172.16.40.254
+Nexthop interface: VOIP40
+Nexthop global: ::
+Nexthop local: ::
+BGP connection: non shared network
+
+BGP neighbor is 172.16.254.253, remote AS 64555, local AS 65255, external link
+  BGP version 4, remote router ID 10.1.3.14
+  BGP state = Established, up for 01:01:01
+  Last read 00:00:39, hold time is 180, keepalive interval is 60 seconds
+  Configured hold time is 180, keepalive interval is 60 seconds
+  Neighbor capabilities:
+    Route refresh: advertised and received (old and new)
+    Address family IPv4 Unicast: advertised and received
+    Address family VPNv4 Unicast: advertised
+    Address family IPv6 Unicast: advertised
+  Received 72 messages, 0 notifications, 0 in queue
+  Sent 75 messages, 0 notifications, 0 in queue
+  Route refresh request: received 0, sent 0
+  NLRI treated as withdraw: 0
+  Minimum time between advertisement runs is 30 seconds
+  Update source is lo54
+
+ For address family: IPv4 Unicast
+  BGP table version 4, neighbor version 4
+  Index 4, Offset 0, Mask 0x10
+  AF-dependant capabilities:
+    Graceful restart: advertised, received, negotiated
+
+  Inbound soft reconfiguration allowed
+  Community attribute sent to this neighbor (both)
+  3 accepted prefixes, 3 prefixes in rib
+  39 announced prefixes
+
+ For address family: VPNv4 Unicast
+  BGP table version 1, neighbor version 1
+  Index 4, Offset 0, Mask 0x10
+  Community attribute sent to this neighbor (both)
+  0 accepted prefixes, 0 prefixes in rib
+  0 announced prefixes
+
+ For address family: IPv6 Unicast
+  BGP table version 1, neighbor version 1
+  Index 4, Offset 0, Mask 0x10
+  Community attribute sent to this neighbor (both)
+  0 accepted prefixes, 0 prefixes in rib
+  0 announced prefixes
+
+ Connections established 1; dropped 0
+ Graceful-restart Status:
+  Remote restart-time is 120 sec
+
+Local host: 172.16.254.254, Local port: 179
+Foreign host: 172.16.254.253, Foreign port: 41088
+Egress interface: 16
+Nexthop: 172.16.254.254
+Nexthop interface: MTRP
+Nexthop global: ::
+Nexthop local: ::
+BGP connection: non shared network
+
+
+FortiVM #  get router info multicast igmp interface 
+Interface DATA10 (Index 12)
+ IGMP Enabled, Active, Non-Querier, Configured for version 3
+ Internet address is 172.16.10.254
+ IGMP querying router is 172.16.10.253
+ IGMP query interval is 125 seconds
+ IGMP querier timeout is 255 seconds
+ IGMP max query response time is 10 seconds
+ Last member query response interval is 1000 milliseconds
+ Group Membership interval is 260 seconds
+ Router Alert options not required in IGMP packets
+Interface CCTV20 (Index 13)
+ IGMP Enabled, Active, Querier, Configured for version 3
+ Internet address is 172.16.20.254
+ IGMP query interval is 125 seconds
+ IGMP querier timeout is 255 seconds
+ IGMP max query response time is 10 seconds
+ Last member query response interval is 1000 milliseconds
+ Group Membership interval is 260 seconds
+ Router Alert options not required in IGMP packets
+Interface IPTV30 (Index 14)
+ IGMP Enabled, Active, Querier, Configured for version 3
+ Internet address is 172.16.30.254
+ IGMP query interval is 125 seconds
+ IGMP querier timeout is 255 seconds
+ IGMP max query response time is 10 seconds
+ Last member query response interval is 1000 milliseconds
+ Group Membership interval is 260 seconds
+ Router Alert options not required in IGMP packets
+Interface VOIP40 (Index 15)
+ IGMP Enabled, Active, Querier, Configured for version 3
+ Internet address is 172.16.40.254
+ IGMP query interval is 125 seconds
+ IGMP querier timeout is 255 seconds
+ IGMP max query response time is 10 seconds
+ Last member query response interval is 1000 milliseconds
+ Group Membership interval is 260 seconds
+ Router Alert options not required in IGMP packets
+Interface MTRP (Index 16)
+ IGMP Enabled, Active, Non-Querier, Configured for version 3
+ Internet address is 172.16.254.254
+ IGMP querying router is 172.16.254.253
+ IGMP query interval is 125 seconds
+ IGMP querier timeout is 255 seconds
+ IGMP max query response time is 10 seconds
+ Last member query response interval is 1000 milliseconds
+ Group Membership interval is 260 seconds
+ Router Alert options not required in IGMP packets
+Interface lo10 (Index 17)
+ IGMP Enabled, Active, Querier, Configured for version 3
+ Internet address is 127.0.0.1
+ IGMP query interval is 125 seconds
+ IGMP querier timeout is 255 seconds
+ IGMP max query response time is 10 seconds
+ Last member query response interval is 1000 milliseconds
+ Group Membership interval is 260 seconds
+ Router Alert options not required in IGMP packets
+Interface lo20 (Index 18)
+ IGMP Enabled, Active, Querier, Configured for version 3
+ Internet address is 127.0.0.1
+ IGMP query interval is 125 seconds
+ IGMP querier timeout is 255 seconds
+ IGMP max query response time is 10 seconds
+ Last member query response interval is 1000 milliseconds
+ Group Membership interval is 260 seconds
+ Router Alert options not required in IGMP packets
+Interface lo30 (Index 19)
+ IGMP Enabled, Active, Querier, Configured for version 3
+ Internet address is 127.0.0.1
+ IGMP query interval is 125 seconds
+ IGMP querier timeout is 255 seconds
+ IGMP max query response time is 10 seconds
+ Last member query response interval is 1000 milliseconds
+ Group Membership interval is 260 seconds
+ Router Alert options not required in IGMP packets
+Interface lo40 (Index 20)
+ IGMP Enabled, Active, Querier, Configured for version 3
+ Internet address is 127.0.0.1
+ IGMP query interval is 125 seconds
+ IGMP querier timeout is 255 seconds
+ IGMP max query response time is 10 seconds
+ Last member query response interval is 1000 milliseconds
+ Group Membership interval is 260 seconds
+ Router Alert options not required in IGMP packets
+Interface lo54 (Index 21)
+ IGMP Enabled, Active, Querier, Configured for version 3
+ Internet address is 127.0.0.1
+ IGMP query interval is 125 seconds
+ IGMP querier timeout is 255 seconds
+ IGMP max query response time is 10 seconds
+ Last member query response interval is 1000 milliseconds
+ Group Membership interval is 260 seconds
+ Router Alert options not required in IGMP packets
+
+
+ FortiVM #  get router info multicast pim sparse-mode neighbour 
+Neighbor          Interface          Uptime/Expires    Ver   DR
+Address                                                      Priority/Mode
+172.16.10.253     DATA10             01:03:13/00:01:31 v2    1 /
+172.16.254.253    MTRP               01:03:10/00:01:35 v2    1 
+
+
+ortiVM #  get router info multicast pim sparse-mode rp-mapping 
+PIM Group-to-RP Mappings
+Group(s): 224.0.0.0/4
+  RP: 10.254.254.254
+    Info source: 10.254.254.253, via bootstrap, priority 0
+         Uptime: 01:03:16, expires: 00:01:58
+  RP: 10.254.254.253
+    Info source: 10.254.254.253, via bootstrap, priority 1
+         Uptime: 01:03:16, expires: 00:01:58
+
+ get router info multicast pim sparse-mode table 
+IP Multicast Routing Table
+
+(*,*,RP) Entries: 0
+(*,G) Entries: 1
+(S,G) Entries: 0
+(S,G,rpt) Entries: 0
+FCR Entries: 0
+
+(*, 224.10.14.1) - 2
+RP: 10.254.254.254
+RPF nbr: 172.16.254.253
+RPF idx: MTRP
+RPF RP: 10.254.254.254, 2, 1, 2, 846930888
+Upstream State: JOINED
+Downstream Expired: 0
+ Local:
+     Total: 0
+ Joined:
+     DATA10
+     Total: 1
+ Lost assert:
+     Total: 0
+FCR:
+
+
+FortiVM # diagnose ip multicast mroute
+grp=224.20.14.1 src=10.20.1.1 intf=13 flags=(0x10000000)[  ] status=resolved
+        last_assert=3154893 bytes=1000 pkt=10 wrong_if=0 num_ifs=1
+        index(ttl)=[16(1),]
+grp=224.20.14.1 src=10.20.11.1 intf=13 flags=(0x10000000)[  ] status=resolved
+        last_assert=35474 bytes=3900 pkt=39 wrong_if=1 num_ifs=1
+        index(ttl)=[16(1),]
+
+
+diagnose ip multicast group-membership
+
+
+FortiVM # execute traceroute 10.254.254.254
+traceroute to 10.254.254.254 (10.254.254.254), 32 hops max, 3 probe packets per hop, 84 byte packets
+ 1  172.16.254.253  6.021 ms  110.677 ms  1.515 ms
+ 2  10.1.2.13  19.330 ms  4.096 ms  3.339 ms
+ 3  10.1.1.21  8.001 ms  4.498 ms  3.625 ms
+ 4  10.254.254.254  17.337 ms  12.059 ms  27.220 ms
