@@ -1,0 +1,472 @@
+PE2 to FW Connection for Multicast Rendezvous Point
+
+vrf definition CCTV
+ description CCTV
+ rd 64555:20
+ vpn id 64555:20
+ !        
+ address-family ipv4
+  mdt auto-discovery mldp inter-as
+  mdt strict-rpf interface
+  mdt partitioned mldp p2mp
+  mdt overlay use-bgp
+  route-target export 64555:20
+  route-target import 64555:20
+ exit-address-family
+!
+vrf definition DATA
+ description DATA
+ rd 64555:10
+ vpn id 64555:10
+ !
+ address-family ipv4
+  mdt auto-discovery mldp inter-as
+  mdt strict-rpf interface
+  mdt partitioned mldp p2mp
+  mdt overlay use-bgp
+  route-target export 64555:10
+  route-target import 64555:10
+ exit-address-family
+!         
+vrf definition IPTV
+ description IPTV
+ rd 64555:30
+ vpn id 64555:30
+ !
+ address-family ipv4
+  mdt auto-discovery mldp inter-as
+  mdt strict-rpf interface
+  mdt partitioned mldp p2mp
+  mdt overlay use-bgp
+  route-target export 64555:30
+  route-target import 64555:30
+ exit-address-family
+!
+vrf definition MTRP
+ rd 64555:254
+ vpn id 64555:254
+ !
+ address-family ipv4
+  mdt auto-discovery mldp inter-as
+  mdt strict-rpf interface
+  mdt partitioned mldp p2mp
+  mdt overlay use-bgp
+  route-target export 64555:254
+  route-target import 64555:254
+ exit-address-family
+!
+vrf definition VOIP
+ description VOIP
+ rd 64555:40
+ vpn id 64555:40
+ !
+ address-family ipv4
+  mdt auto-discovery mldp inter-as
+  mdt strict-rpf interface
+  mdt partitioned mldp p2mp
+  mdt overlay use-bgp
+  route-target export 64555:40
+  route-target import 64555:40
+ exit-address-family
+!
+!
+no aaa new-model
+!
+ip multicast-routing distributed
+ip multicast-routing vrf CCTV distributed
+ip multicast-routing vrf DATA distributed
+ip multicast-routing vrf IPTV distributed
+ip multicast-routing vrf MTRP distributed
+ip multicast-routing vrf VOIP distributed
+
+
+interface Loopback0
+ description not connected
+ ip address 10.1.3.12 255.255.255.255
+!
+interface Loopback1012
+ vrf forwarding DATA
+ ip address 10.10.12.1 255.255.255.252
+ ip pim sparse-mode
+!
+interface Loopback2012
+ vrf forwarding CCTV
+ ip address 10.20.12.1 255.255.255.252
+!
+interface Loopback3012
+ vrf forwarding IPTV
+ ip address 10.30.12.1 255.255.255.252
+!
+interface Loopback4012
+ vrf forwarding VOIP
+ ip address 10.40.12.1 255.255.255.252
+!
+interface Loopback20254
+ description CCTV-RP-0(Rendezvous Point)
+ vrf forwarding CCTV
+ ip address 10.20.254.254 255.255.255.255
+ ip pim sparse-mode
+ shutdown
+!
+interface Loopback254254
+ vrf forwarding MTRP
+ ip address 10.254.254.254 255.255.255.255
+ ip pim sparse-mode
+!
+
+interface GigabitEthernet6
+ description to GigabitEthernet6.P2
+ ip address 10.1.2.6 255.255.255.252
+ ip router isis 
+ negotiation auto
+ bfd template isis
+ no mop enabled
+ no mop sysid
+ isis circuit-type level-2-only
+ isis network point-to-point 
+ isis authentication mode md5
+ isis authentication key-chain cisco
+ no isis hello padding
+
+ router isis
+ net 49.0001.0000.0000.0012.00
+ is-type level-2-only
+ router-id Loopback0
+ authentication mode md5 level-2
+ authentication key-chain cisco level-2
+ metric-style wide
+ no hello padding point-to-point
+ log-adjacency-changes all
+ distribute link-state instance-id 64555
+ passive-interface Loopback0
+ bfd all-interfaces
+ mpls ldp sync
+ mpls ldp autoconfig
+!
+router bgp 64555
+ bgp router-id 10.1.3.12
+ bgp log-neighbor-changes
+ no bgp default ipv4-unicast
+ neighbor VX-RR peer-group
+ neighbor VX-RR remote-as 64555
+ neighbor VX-RR log-neighbor-changes
+ neighbor VX-RR update-source Loopback0
+ neighbor 10.1.3.1 peer-group VX-RR
+ neighbor 10.1.3.2 peer-group VX-RR
+ neighbor 10.1.3.3 peer-group VX-RR
+ neighbor 10.1.3.4 peer-group VX-RR
+ !
+ address-family ipv4
+ exit-address-family
+ !
+ address-family ipv4 mvpn
+  neighbor VX-RR send-community extended
+  neighbor 10.1.3.1 activate
+  neighbor 10.1.3.2 activate
+  neighbor 10.1.3.3 activate
+  neighbor 10.1.3.4 activate
+ exit-address-family
+ !
+ address-family vpnv4
+  neighbor VX-RR send-community extended
+  neighbor 10.1.3.1 activate
+  neighbor 10.1.3.2 activate
+  neighbor 10.1.3.3 activate
+  neighbor 10.1.3.4 activate
+ exit-address-family
+ !
+ address-family ipv4 mdt
+  neighbor VX-RR send-community extended
+  neighbor 10.1.3.1 activate
+  neighbor 10.1.3.2 activate
+  neighbor 10.1.3.3 activate
+  neighbor 10.1.3.4 activate
+ exit-address-family
+ !
+ address-family l2vpn vpls
+  neighbor VX-RR send-community extended
+  neighbor 10.1.3.1 activate
+  neighbor 10.1.3.2 activate
+  neighbor 10.1.3.3 activate
+  neighbor 10.1.3.4 activate
+ exit-address-family
+ !
+ address-family l2vpn evpn
+  neighbor VX-RR send-community both
+  neighbor 10.1.3.1 activate
+  neighbor 10.1.3.2 activate
+  neighbor 10.1.3.3 activate
+  neighbor 10.1.3.4 activate
+ exit-address-family
+ !
+ address-family rtfilter unicast
+  neighbor VX-RR send-community extended
+  neighbor 10.1.3.1 activate
+  neighbor 10.1.3.2 activate
+  neighbor 10.1.3.3 activate
+  neighbor 10.1.3.4 activate
+ exit-address-family
+ !
+ address-family ipv4 vrf CCTV
+  redistribute connected
+  redistribute static
+ exit-address-family
+ !
+ address-family ipv4 vrf DATA
+  redistribute connected
+  redistribute static
+ exit-address-family
+ !
+ address-family ipv4 vrf IPTV
+  redistribute connected
+  redistribute static
+ exit-address-family
+ !
+ address-family ipv4 vrf MTRP
+  redistribute connected
+  redistribute static
+ exit-address-family
+ !
+ address-family ipv4 vrf VOIP
+  redistribute connected
+  redistribute static
+ exit-address-family
+!
+ip forward-protocol nd
+no ip pim autorp
+ip pim ssm default
+no ip pim vrf CCTV autorp
+no ip pim vrf DATA autorp
+no ip pim vrf IPTV autorp
+ip pim vrf MTRP rp-address 10.254.254.254
+no ip pim vrf MTRP autorp
+ip pim vrf MTRP bsr-candidate Loopback254254 0
+ip pim vrf MTRP rp-candidate Loopback254254
+
+
+
+###Troubleshooting 
+
+PE2#show ip pim all-vrfs tunnel 
+Tunnel4 
+  Type       : PIM Encap
+  RP         : 10.254.254.253
+  Source     : -
+  State      : DOWN
+  Last event : Created (03:19:49)
+  VRF        : CCTV
+Tunnel8 
+  Type       : PIM Encap
+  RP         : 10.254.254.254
+  Source     : -
+  State      : DOWN
+  Last event : Created (03:19:48)
+  VRF        : CCTV
+Tunnel3 
+  Type       : PIM Encap
+  RP         : 10.254.254.253
+  Source     : 10.10.12.1
+  State      : UP
+  Last event : Created (03:19:49)
+  VRF        : DATA
+Tunnel7 
+  Type       : PIM Encap
+  RP         : 10.254.254.254
+  Source     : 10.10.12.1
+  State      : UP
+  Last event : Created (03:19:48)
+  VRF        : DATA
+Tunnel5 
+  Type       : PIM Encap
+  RP         : 10.254.254.253
+  Source     : -
+  State      : DOWN
+  Last event : Created (03:19:49)
+  VRF        : IPTV
+Tunnel9 
+  Type       : PIM Encap
+  RP         : 10.254.254.254
+  Source     : -
+  State      : DOWN
+  Last event : Created (03:19:48)
+  VRF        : IPTV
+Tunnel0 
+  Type       : PIM Encap
+  RP         : 10.254.254.254*
+  Source     : 10.254.254.254
+  State      : UP
+  Last event : Created (08:31:22)
+  VRF        : MTRP
+Tunnel2 
+  Type       : PIM Encap
+  RP         : 10.254.254.253
+  Source     : 10.254.254.254
+  State      : UP
+  Last event : Created (03:19:49)
+  VRF        : MTRP
+Tunnel1* 
+  Type       : PIM Decap
+  RP         : 10.254.254.254*
+  Source     : -
+  State      : UP
+  Last event : Created (08:31:22)
+  VRF        : MTRP
+Tunnel6 
+  Type       : PIM Encap
+  RP         : 10.254.254.253
+  Source     : -
+  State      : DOWN
+  Last event : Created (03:19:49)
+  VRF        : VOIP
+Tunnel10 
+  Type       : PIM Encap
+  RP         : 10.254.254.254
+  Source     : -
+  State      : DOWN
+  Last event : Created (03:19:48)
+  VRF        : VOIP
+
+  PE2#  show ip pim vrf DATA rp
+Group: 224.10.14.1, RP: 10.254.254.254, uptime 03:20:24, expires 00:01:27
+
+PE2# show ip pim vrf DATA bsr-router 
+PIMv2 Bootstrap information
+  BSR address: 10.254.254.253 (?)
+  Uptime:      03:21:17, BSR Priority: 1, Hash mask length: 0
+  Expires:     00:01:21
+
+PE2#  show ip pim vrf DATA mvpn mldp 
+
+AF_IPv4 MLDP AD routes:
+
+
+==========================================
+ RD 64555:10 Route Counts:
+ Recv: Total: 8, Type 1: 3, Type 3: 4, Type 7: 1
+ Send: Total: 3, Type 1: 1, Type 3: 1, Type 5: 1
+==========================================
+-----------------------------------------
+[1] [(0.0.0.0,0.0.0.0) : <10:0x00:0>{No Tunnel}], RD: [64555:10], R-RD: [64555:10], orig_id: 10.1.3.11, Up: 08:30:25,
+m_vrf_rt: 0, send: 0, pre_ad: 0, dirty: 0, delpend: 0, rd_pool: 1, tdb: Y, transport_intf: Null,
+RefCnt: 1, et_pend: 0, i_pmsi_ref: 1, exp: 0, pool: 0, d_conf: 0, tt: 10, loc_tt: 0
+-----------------------------------------
+[1] [(0.0.0.0,0.0.0.0) : <10:0x00:0>{No Tunnel}], RD: [64555:10], R-RD: [64555:10], orig_id: 10.1.3.13, Up: 08:30:25,
+m_vrf_rt: 0, send: 0, pre_ad: 0, dirty: 0, delpend: 0, rd_pool: 1, tdb: Y, transport_intf: Null,
+RefCnt: 1, et_pend: 0, i_pmsi_ref: 1, exp: 0, pool: 0, d_conf: 0, tt: 10, loc_tt: 0
+-----------------------------------------
+[1] [(0.0.0.0,0.0.0.0) : <10:0x00:0>{No Tunnel}], RD: [64555:10], R-RD: [64555:10], orig_id: 10.1.3.14, Up: 03:22:42,
+m_vrf_rt: 0, send: 0, pre_ad: 0, dirty: 0, delpend: 0, rd_pool: 1, tdb: Y, transport_intf: Null,
+RefCnt: 1, et_pend: 0, i_pmsi_ref: 1, exp: 0, pool: 0, d_conf: 0, tt: 10, loc_tt: 0
+-----------------------------------------
+[3] [(*,*) : <2:0x00:0>{1:10.1.3.11:7:<1>[<4>|131072 (0x00020000)]}], RD: [64555:10], R-RD: [64555:10], orig_id: 10.1.3.11, Up: 08:30:25,
+m_vrf_rt: 0, send: 0, pre_ad: 0, dirty: 1, delpend: 0, rd_pool: 1, tdb: Y, transport_intf: Null,
+RefCnt: 1, et_pend: 0, i_pmsi_ref: 0, exp: 0, pool: 0, d_conf: 0, tt: 2, loc_tt: 0
+-----------------------------------------
+[3] [(*,*) : <2:0x00:0>{1:10.1.3.13:7:<1>[<4>|131072 (0x00020000)]}], RD: [64555:10], R-RD: [64555:10], orig_id: 10.1.3.13, Up: 08:30:25,
+m_vrf_rt: 0, send: 0, pre_ad: 0, dirty: 1, delpend: 0, rd_pool: 1, tdb: Y, transport_intf: Null,
+RefCnt: 1, et_pend: 0, i_pmsi_ref: 0, exp: 0, pool: 0, d_conf: 0, tt: 2, loc_tt: 0
+-----------------------------------------
+[3] [(*,*) : <2:0x00:0>{1:10.1.3.14:7:<1>[<4>|131072 (0x00020000)]}], RD: [64555:10], R-RD: [64555:10], orig_id: 10.1.3.14, Up: 03:22:42,
+m_vrf_rt: 0, send: 0, pre_ad: 0, dirty: 0, delpend: 0, rd_pool: 1, tdb: Y, transport_intf: Lspvif5,
+RefCnt: 1, et_pend: 0, i_pmsi_ref: 0, exp: 0, pool: 0, d_conf: 0, tt: 2, loc_tt: 0
+-----------------------------------------
+[3] [(*,224.0.0.13) : <2:0x00:0>{1:10.1.3.14:7:<1>[<4>|196607 (0x0002FFFF)]}], RD: [64555:10], R-RD: [64555:10], orig_id: 10.1.3.14, Up: 03:21:44,
+m_vrf_rt: 0, send: 0, pre_ad: 0, dirty: 0, delpend: 0, rd_pool: 1, tdb: Y, transport_intf: Lspvif1,
+RefCnt: 1, et_pend: 0, i_pmsi_ref: 0, exp: 0, pool: 0, d_conf: 0, tt: 2, loc_tt: 0
+-----------------------------------------
+[1] [(0.0.0.0,0.0.0.0) : <10:0x00:0>{No Tunnel}], RD: [64555:10], R-RD: [64555:10], orig_id: 10.1.3.12, Up: 08:31:17,
+m_vrf_rt: 0, send: 1, pre_ad: 0, dirty: 0, delpend: 0, rd_pool: 1, tdb: Y, transport_intf: Null,
+RefCnt: 1, et_pend: 0, i_pmsi_ref: 1, exp: 0, pool: 0, d_conf: 0, tt: 10, loc_tt: 0
+-----------------------------------------
+[3] [(*,*) : <2:0x00:0>{1:10.1.3.12:7:<1>[<4>|131072 (0x00020000)]}], RD: [64555:10], R-RD: [64555:10], orig_id: 10.1.3.12, Up: 08:31:17,
+m_vrf_rt: 0, send: 1, pre_ad: 0, dirty: 0, delpend: 0, rd_pool: 1, tdb: Y, transport_intf: Lspvif1,
+RefCnt: 1, et_pend: 0, i_pmsi_ref: 0, exp: 0, pool: 0, d_conf: 0, tt: 2, loc_tt: 0
+
+++++++++++++++++++++++++++++++++++++++++++
+AF_IPv4 MLDP Total routes: Recv 8, Sent 3
+++++++++++++++++++++++++++++++++++++++++++
+
+
+PE2#show ip route vrf DATA
+
+Routing Table: DATA
+Codes: L - local, C - connected, S - static, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area 
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2, m - OMP
+       n - NAT, Ni - NAT inside, No - NAT outside, Nd - NAT DIA
+       i - IS-IS, su - IS-IS summary, L1 - IS-IS level-1, L2 - IS-IS level-2
+       ia - IS-IS inter area, * - candidate default, U - per-user static route
+       H - NHRP, G - NHRP registered, g - NHRP registration summary
+       o - ODR, P - periodic downloaded static route, l - LISP
+       a - application route
+       + - replicated route, % - next hop override, p - overrides from PfR
+       & - replicated local route overrides by connected
+
+Gateway of last resort is 10.1.3.14 to network 0.0.0.0
+
+B*    0.0.0.0/0 [200/0] via 10.1.3.14, 03:23:48
+      10.0.0.0/8 is variably subnetted, 27 subnets, 3 masks
+B        10.10.1.0/24 [200/0] via 10.1.3.11, 08:31:19
+B        10.10.3.0/24 [200/0] via 10.1.3.13, 08:31:19
+B        10.10.11.0/30 [200/0] via 10.1.3.11, 08:31:19
+C        10.10.12.0/30 is directly connected, Loopback1012
+L        10.10.12.1/32 is directly connected, Loopback1012
+B        10.10.13.0/30 [200/0] via 10.1.3.13, 08:31:19
+B        10.10.14.0/30 [200/0] via 10.1.3.14, 03:23:48
+B        10.20.1.0/24 [200/0] via 10.1.3.14, 00:36:57
+B        10.20.3.0/24 [200/0] via 10.1.3.14, 00:36:57
+B        10.20.11.0/30 [200/0] via 10.1.3.14, 00:36:57
+B        10.20.12.0/30 [200/0] via 10.1.3.14, 00:36:57
+B        10.20.13.0/30 [200/0] via 10.1.3.14, 00:36:57
+B        10.20.14.0/30 [200/0] via 10.1.3.14, 00:36:57
+B        10.30.1.0/24 [200/0] via 10.1.3.14, 00:36:57
+B        10.30.3.0/24 [200/0] via 10.1.3.14, 00:36:57
+B        10.30.11.0/30 [200/0] via 10.1.3.14, 00:36:57
+B        10.30.12.0/30 [200/0] via 10.1.3.14, 00:36:57
+B        10.30.13.0/30 [200/0] via 10.1.3.14, 00:36:57
+B        10.30.14.0/30 [200/0] via 10.1.3.14, 00:36:57
+B        10.40.1.0/24 [200/0] via 10.1.3.14, 00:36:57
+B        10.40.3.0/24 [200/0] via 10.1.3.14, 00:36:57
+B        10.40.11.0/30 [200/0] via 10.1.3.14, 00:36:57
+B        10.40.12.0/30 [200/0] via 10.1.3.14, 00:36:57
+B        10.40.13.0/30 [200/0] via 10.1.3.14, 00:36:57
+B        10.40.14.0/30 [200/0] via 10.1.3.14, 00:36:57
+B        10.254.254.253/32 [200/0] via 10.1.3.14, 00:36:57
+B        10.254.254.254/32 [200/0] via 10.1.3.14, 00:36:57
+      172.16.0.0/16 is variably subnetted, 11 subnets, 2 masks
+B        172.16.1.0/30 [200/0] via 10.1.3.14, 03:23:48
+B        172.16.10.0/30 [200/0] via 10.1.3.14, 00:36:57
+B        172.16.10.252/30 [200/0] via 10.1.3.14, 03:23:48
+B        172.16.20.0/30 [200/0] via 10.1.3.14, 00:36:57
+B        172.16.20.252/30 [200/0] via 10.1.3.14, 00:36:57
+B        172.16.30.0/30 [200/0] via 10.1.3.14, 00:36:57
+B        172.16.30.252/30 [200/0] via 10.1.3.14, 00:36:57
+B        172.16.40.0/30 [200/0] via 10.1.3.14, 00:36:57
+B        172.16.40.252/30 [200/0] via 10.1.3.14, 00:36:57
+B        172.16.254.2/32 [200/0] via 10.1.3.14, 00:36:57
+B        172.16.254.252/30 [200/0] via 10.1.3.14, 00:36:57
+B     192.168.144.0/24 [200/0] via 10.1.3.14, 00:36:57
+
+PE2# traceroute vrf DATA 10.254.254.254
+Type escape sequence to abort.
+Tracing the route to 10.254.254.254
+VRF info: (vrf in name/id, vrf out name/id)
+  1 10.1.2.5 [MPLS: Labels 20004/140048 Exp 0] 5 msec 5 msec 5 msec
+  2 10.1.1.22 [MPLS: Labels 40005/140048 Exp 0] 4 msec 5 msec 4 msec
+  3 172.16.10.253 [MPLS: Label 140048 Exp 0] 4 msec 3 msec 4 msec
+  4 172.16.10.254 4 msec 5 msec 3 msec
+  5 172.16.254.253 6 msec 6 msec 5 msec
+  6 10.1.2.13 [MPLS: Labels 40012/120021 Exp 0] 9 msec 8 msec 9 msec
+  7 10.1.1.21 [MPLS: Labels 20011/120021 Exp 0] 8 msec 9 msec 8 msec
+  8 10.254.254.254 43 msec *  8 msec
+PE2#
+
+E2#show ip pim vrf DATA interface 
+
+Address          Interface                Ver/   Nbr    Query  DR         DR
+                                          Mode   Count  Intvl  Prior
+10.1.3.12        Lspvif1                  v2/S   0      30     1          10.1.3.12
+10.10.12.1       Loopback1012             v2/S   0      30     1          10.10.12.1
+10.1.3.12        Lspvif5                  v2/S   0      30     1          10.1.3.12
+
